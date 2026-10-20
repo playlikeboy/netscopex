@@ -208,6 +208,13 @@ export const SloDefinitionSchema = z.object({
 });
 export type SloDefinition = z.infer<typeof SloDefinitionSchema>;
 
+export const CreateSloInputSchema = SloDefinitionSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type CreateSloInput = z.infer<typeof CreateSloInputSchema>;
+
 export const SloCalculationResultSchema = z.object({
   sloId: z.string().uuid(),
   monitorId: z.string().uuid(),

@@ -1,0 +1,28 @@
+name: Feature Request
+description: Propose a new capability, probe diagnostic check, or reliability enhancement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: Share your proposal for extending NetScope X.
+  - type: input
+    id: title
+    attributes:
+      label: Feature Title
+      placeholder: e.g. gRPC synthetic probe worker support
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What operational pain point or use case does this address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Proposed Solution / Architecture
+      description: How should this be implemented across the control plane and workers?
+    validations:
+      required: true

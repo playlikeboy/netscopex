@@ -35,6 +35,10 @@ export class SloService {
     return this.sloRepo.create(data);
   }
 
+  async deleteSlo(id: string): Promise<boolean> {
+    return this.sloRepo.delete(id);
+  }
+
   async evaluateSlo(sloId: string): Promise<SloCalculationResult> {
     const slo = await this.sloRepo.findById(sloId);
     if (!slo) throw new Error("SLO not found");

@@ -23,6 +23,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  deleteMonitor: (id: string) =>
+    fetchJson<{ success: boolean; deletedId: string }>(`/api/v1/monitors/${id}`, {
+      method: "DELETE",
+    }),
   triggerCheck: (id: string) =>
     fetchJson<{ success: boolean; jobId: string }>(`/api/v1/monitors/${id}/trigger`, {
       method: "POST",
@@ -56,6 +60,16 @@ export const api = {
   },
 
   getSlos: () => fetchJson<any[]>("/api/v1/slos"),
+  getSlo: (id: string) => fetchJson<any>(`/api/v1/slos/${id}`),
+  createSlo: (data: any) =>
+    fetchJson<any>("/api/v1/slos", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  deleteSlo: (id: string) =>
+    fetchJson<{ success: boolean; deletedId: string }>(`/api/v1/slos/${id}`, {
+      method: "DELETE",
+    }),
   evaluateSlo: (id: string) => fetchJson<any>(`/api/v1/slos/${id}/evaluate`),
 
   runLoadTest: (config: any) =>

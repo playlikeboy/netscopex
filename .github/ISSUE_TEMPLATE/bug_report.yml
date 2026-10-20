@@ -1,0 +1,39 @@
+name: Bug Report
+description: Report a defect, unexpected behavior, or reliability failure in NetScope X
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for filing an issue. Please provide actionable details and diagnostic context.
+  - type: input
+    id: component
+    attributes:
+      label: Affected Component
+      description: Which part of the platform is affected?
+      placeholder: e.g. apps/api, apps/worker, apps/web, apps/mobile, lease queue
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: Clear and concise description of what happened vs expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Steps
+      description: Steps or commands to reproduce the issue.
+      placeholder: |
+        1. Start local infra `bash scripts/start-local-infra.sh`
+        2. Create monitor with payload ...
+        3. Observe error ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs & Traces
+      description: Paste any error outputs or structured JSON logs.
+      render: shell

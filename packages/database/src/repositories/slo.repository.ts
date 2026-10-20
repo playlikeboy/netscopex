@@ -58,6 +58,11 @@ export class SloRepository {
     return res.rows.map((r) => this.mapRow(r));
   }
 
+  async delete(id: string): Promise<boolean> {
+    const res = await query("DELETE FROM slos WHERE id = $1", [id]);
+    return (res.rowCount ?? 0) > 0;
+  }
+
   private mapRow(row: any): SloDefinition {
     return {
       id: row.id,

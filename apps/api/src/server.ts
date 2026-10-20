@@ -12,8 +12,15 @@ import { RegressionService } from "./services/regression.service.js";
 import { diagnoseIncident } from "./engine/diagnosis-engine.js";
 import { runControlledLoadTest } from "./engine/load-tester.js";
 import { runSyntheticJourney } from "./engine/journey-runner.js";
+import { handleSseSubscription, telemetryBus } from "./engine/events.js";
 import { WorkerRepository } from "@netscopex/database";
-import { CreateMonitorInputSchema, UpdateMonitorInputSchema, LoadTestConfigSchema, SyntheticJourneySchema } from "@netscopex/contracts";
+import {
+  CreateMonitorInputSchema,
+  UpdateMonitorInputSchema,
+  CreateSloInputSchema,
+  LoadTestConfigSchema,
+  SyntheticJourneySchema,
+} from "@netscopex/contracts";
 
 export async function createServer(): Promise<{
   app: FastifyInstance;
@@ -138,6 +145,7 @@ export async function createServer(): Promise<{
         parsed,
         config.FAULT_INJECTION_ENABLED
       );
+      telemetryBus.broadcast("monitor_state", { action: "created", monitorId: monitor.id, name: monitor.name });
       reply.status(201);
       return monitor;
     } catch (err: any) {
@@ -158,6 +166,7 @@ export async function createServer(): Promise<{
         reply.status(404);
         return { error: "Monitor not found" };
       }
+      telemetryBus.broadcast("monitor_state", { action: "updated", monitorId: req.params.id });
       return updated;
     } catch (err: any) {
       reply.status(400);
@@ -171,12 +180,14 @@ export async function createServer(): Promise<{
       reply.status(404);
       return { error: "Monitor not found" };
     }
+    telemetryBus.broadcast("monitor_state", { action: "deleted", monitorId: req.params.id });
     return { success: true, deletedId: req.params.id };
   });
 
   app.post("/api/v1/monitors/:id/trigger", async (req: any, reply) => {
     try {
       const jobId = await monitorService.triggerCheck(req.params.id);
+      telemetryBus.broadcast("probe_result", { action: "triggered", monitorId: req.params.id, jobId });
       return { success: true, jobId, message: "Probe check scheduled for immediate execution" };
     } catch (err: any) {
       reply.status(400);
@@ -232,6 +243,7 @@ export async function createServer(): Promise<{
       reply.status(404);
       return { error: "Incident not found or already acknowledged/resolved" };
     }
+    telemetryBus.broadcast("incident", { action: "acknowledged", incidentId: req.params.id, user });
     return incident;
   });
 
@@ -243,6 +255,7 @@ export async function createServer(): Promise<{
       reply.status(404);
       return { error: "Incident not found or already resolved" };
     }
+    telemetryBus.broadcast("incident", { action: "resolved", incidentId: req.params.id, user, reason });
     return incident;
   });
 
@@ -270,8 +283,38 @@ export async function createServer(): Promise<{
     return sloService.listSlos(activeProjId);
   });
 
+  app.post("/api/v1/slos", async (req: any, reply) => {
+    try {
+      const parsed = CreateSloInputSchema.parse(req.body);
+      const slo = await sloService.createSlo(parsed);
+      telemetryBus.broadcast("slo_evaluated", { action: "created", sloId: slo.id, name: slo.name });
+      reply.status(201);
+      return slo;
+    } catch (err: any) {
+      reply.status(400);
+      return { error: err.message };
+    }
+  });
+
   app.get("/api/v1/slos/:id/evaluate", async (req: any) => {
     return sloService.evaluateSlo(req.params.id);
+  });
+
+  app.delete("/api/v1/slos/:id", async (req: any, reply) => {
+    const deleted = await sloService.deleteSlo(req.params.id);
+    if (!deleted) {
+      reply.status(404);
+      return { error: "SLO not found" };
+    }
+    telemetryBus.broadcast("slo_evaluated", { action: "deleted", sloId: req.params.id });
+    return { success: true, deletedId: req.params.id };
+  });
+
+  // ==========================================
+  // Real-Time Telemetry Streaming (SSE)
+  // ==========================================
+  app.get("/api/v1/stream/events", async (req, reply) => {
+    return handleSseSubscription(req, reply);
   });
 
   // ==========================================

@@ -16,6 +16,9 @@ describe("Durable Queue & Lease Lifecycle Integration", () => {
     // Run schema migrations on test database
     await runMigrations();
 
+    // Clean up any stale probe jobs from previous benchmark runs
+    await getDbPool().query("DELETE FROM probe_jobs");
+
     // Create a monitor to associate probe jobs
     const orgRes = await getDbPool().query(`
       INSERT INTO organizations (name, slug)

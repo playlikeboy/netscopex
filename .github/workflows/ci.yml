@@ -1,0 +1,72 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, Typecheck, Test & Build
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+          POSTGRES_DB: netscopex
+        ports:
+          - 54332:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgrespassword@127.0.0.1:54332/netscopex?sslmode=disable
+      NODE_ENV: test
+      JWT_SECRET: netscopex_ci_test_secret_key_2026_super_secure
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.6.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install Monorepo Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Monorepo Typecheck
+        run: pnpm -r typecheck
+
+      - name: Run Unit Tests
+        run: npx vitest run test/unit
+
+      - name: Database Migrations
+        run: pnpm --filter=@netscopex/database migrate
+
+      - name: Run Integration Tests
+        run: npx vitest run test/integration
+
+      - name: Run End-to-End Reliability Lifecycle Tests
+        run: npx vitest run test/e2e
+
+      - name: Monorepo Production Build
+        run: pnpm build
