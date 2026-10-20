@@ -1,0 +1,27 @@
+{
+  "name": "netscopex-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NetScope X — Production-Grade Distributed Observability & Reliability Engineering Platform",
+  "scripts": {
+    "build": "pnpm -r --filter=!@netscopex/mobile build",
+    "test": "pnpm -r test",
+    "test:unit": "vitest run --testNamePattern='^((?!integration|e2e).)*$'",
+    "test:integration": "vitest run integration",
+    "test:e2e": "vitest run e2e",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "dev:infra": "bash scripts/start-local-infra.sh",
+    "db:migrate": "pnpm --filter=@netscopex/database migrate",
+    "db:seed": "pnpm --filter=@netscopex/database seed",
+    "benchmark": "tsx scripts/run-benchmarks.ts",
+    "fault:demo": "tsx scripts/run-fault-demo.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "packageManager": "pnpm@12.6.0"
+}
